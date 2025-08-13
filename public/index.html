@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rev - Revolt Motors Voice Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message {
+            padding: 15px 20px;
+            border-radius: 20px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            align-self: flex-end;
+            color: white;
+        }
+
+        .message.assistant {
+            background: rgba(255, 255, 255, 0.1);
+            align-self: flex-start;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            margin-top: 20px;
+        }
+
+        .voice-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .voice-btn.recording {
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+            animation: pulse 1.5s infinite;
+        }
+
+        .voice-btn.processing {
+            background: linear-gradient(135deg, #ffa502, #ff6348);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status {
+            text-align: center;
+            opacity: 0.8;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .interrupt-btn {
+            padding: 10px 20px;
+            background: rgba(255, 71, 87, 0.2);
+            border: 2px solid #ff4757;
+            color: #ff4757;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .interrupt-btn:hover {
+            background: rgba(255, 71, 87, 0.3);
+            transform: scale(1.05);
+        }
+
+        .interrupt-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .text-input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .text-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .text-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .text-input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .connection-status.connected {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+        .wave-animation {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, transparent 70%);
+            animation: wave 2s infinite;
+            opacity: 0;
+        }
+
+        .voice-btn.recording .wave-animation {
+            opacity: 1;
+        }
+
+        @keyframes wave {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="connection-status" id="connectionStatus">Disconnected</div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚡ REV</div>
+            <div class="subtitle">Your AI companion for Revolt Motors</div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="message assistant">
+                <strong>Rev:</strong> Hey there! I'm Rev, your AI assistant for Revolt Motors. I'm here to talk about
+                our amazing electric motorcycles, features, pricing, and everything about the electric revolution. How
+                can I help you today?
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="interrupt-btn" id="interruptBtn" disabled>Stop Speaking</button>
+            <button class="voice-btn" id="voiceBtn">
+                <span id="voiceIcon">🎤</span>
+                <div class="wave-animation"></div>
+            </button>
+        </div>
+
+        <div class="text-input-area">
+            <input type="text" class="text-input" id="textInput" placeholder="Or type your message here..." />
+            <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+
+        <div class="status" id="status">Click the microphone to start voice chat</div>
+    </div>
+
+    <!-- <script>
+        class RevoltVoiceChat {
+            constructor() {
+                this.ws = null;
+                this.isRecording = false;
+                this.isProcessing = false;
+                this.isSpeaking = false;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.speechSynthesis = window.speechSynthesis;
+                this.currentUtterance = null;
+                
+                this.initializeElements();
+                this.initializeWebSocket();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.chatArea = document.getElementById('chatArea');
+                this.voiceBtn = document.getElementById('voiceBtn');
+                this.voiceIcon = document.getElementById('voiceIcon');
+                this.interruptBtn = document.getElementById('interruptBtn');
+                this.status = document.getElementById('status');
+                this.textInput = document.getElementById('textInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.connectionStatus = document.getElementById('connectionStatus');
+            }
+
+            initializeWebSocket() {
+                const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${wsProtocol}//${window.location.host}`;
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    this.updateConnectionStatus(true);
+                    this.ws.send(JSON.stringify({ type: 'start_session' }));
+                };
+                
+                this.ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleWebSocketMessage(data);
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    this.updateConnectionStatus(false);
+                    setTimeout(() => this.initializeWebSocket(), 5000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus(false);
+                };
+            }
+
+            updateConnectionStatus(connected) {
+                this.connectionStatus.textContent = connected ? 'Connected' : 'Disconnected';
+                this.connectionStatus.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+            }
+
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'session_started':
+                        this.updateStatus('Session started - Ready to chat!');
+                        break;
+                    case 'text_response':
+                        this.addMessage('assistant', data.message);
+                        this.speakResponse(data.message);
+                        break;
+                    case 'interrupted':
+                        this.stopSpeaking();
+                        break;
+                    case 'error':
+                        this.updateStatus(`Error: ${data.message}`);
+                        break;
+                }
+            }
+
+            setupEventListeners() {
+                this.voiceBtn.addEventListener('click', () => this.toggleRecording());
+                this.interruptBtn.addEventListener('click', () => this.interruptSpeaking());
+                this.textInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendTextMessage();
+                });
+                this.sendBtn.addEventListener('click', () => this.sendTextMessage());
+            }
+
+            async toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    await this.startRecording();
+                }
+            }
+
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.audioChunks = [];
+
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.audioChunks.push(event.data);
+                        }
+                    };
+
+                    this.mediaRecorder.onstop = () => {
+                        this.processAudioRecording();
+                    };
+
+                    this.mediaRecorder.start();
+                    this.isRecording = true;
+                    this.updateVoiceButton();
+                    this.updateStatus('Listening... Speak now!');
+
+                } catch (error) {
+                    console.error('Error starting recording:', error);
+                    this.updateStatus('Microphone access denied or not available');
+                }
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    this.isRecording = false;
+                    this.isProcessing = true;
+                    this.updateVoiceButton();
+                    this.updateStatus('Processing your message...');
+                }
+            }
+
+            async processAudioRecording() {
+                // For demo purposes, we'll convert this to text input simulation
+                // In a real implementation, you'd send audio data to the backend
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                
+                // Simulate speech-to-text for demo
+                setTimeout(() => {
+                    const demoMessages = [
+                        "Tell me about Revolt Motors",
+                        "What are the features of RV400?",
+                        "How much does the RV1 cost?",
+                        "Where can I buy a Revolt motorcycle?",
+                        "What's the range of Revolt bikes?"
+                    ];
+                    
+                    const randomMessage = demoMessages[Math.floor(Math.random() * demoMessages.length)];
+                    this.addMessage('user', randomMessage);
+                    this.sendMessageToServer(randomMessage);
+                    
+                    this.isProcessing = false;
+                    this.updateVoiceButton();
+                }, 1000);
+            }
+
+            sendTextMessage() {
+                const message = this.textInput.value.trim();
+                if (message && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.addMessage('user', message);
+                    this.sendMessageToServer(message);
+                    this.textInput.value = '';
+                }
+            }
+
+            sendMessageToServer(message) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        type: 'text_message',
+                        message: message
+                    }));
+                }
+            }
+
+            addMessage(sender, message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                if (sender === 'assistant') {
+                    messageDiv.innerHTML = `<strong>Rev:</strong> ${message}`;
+                } else {
+                    messageDiv.innerHTML = `<strong>You:</strong> ${message}`;
+                }
+                
+                this.chatArea.appendChild(messageDiv);
+                this.chatArea.scrollTop = this.chatArea.scrollHeight;
+            }
+
+            speakResponse(text) {
+                if (this.speechSynthesis && text) {
+                    // Stop any current speech
+                    this.speechSynthesis.cancel();
+                    
+                    this.currentUtterance = new SpeechSynthesisUtterance(text);
+                    this.currentUtterance.rate = 0.9;
+                    this.currentUtterance.pitch = 1;
+                    this.currentUtterance.volume = 0.8;
+                    
+                    // Set voice to a female voice if available
+                    const voices = this.speechSynthesis.getVoices();
+                    const femaleVoice = voices.find(voice => 
+                        voice.name.toLowerCase().includes('female') || 
+                        voice.name.toLowerCase().includes('woman') ||
+                        voice.name.toLowerCase().includes('zira') ||
+                        voice.name.toLowerCase().includes('catherine')
+                    );
+                    
+                    if (femaleVoice) {
+                        this.currentUtterance.voice = femaleVoice;
+                    }
+                    
+                    this.currentUtterance.onstart = () => {
+                        this.isSpeaking = true;
+                        this.interruptBtn.disabled = false;
+                        this.updateStatus('Rev is speaking...');
+                    };
+                    
+                    this.currentUtterance.onend = () => {
+                        this.isSpeaking = false;
+                        this.interruptBtn.disabled = true;
+                        this.updateStatus('Click the microphone to start voice chat');
+                    };
+                    
+                    this.speechSynthesis.speak(this.currentUtterance);
+                }
+            }
+
+            interruptSpeaking() {
+                if (this.isSpeaking) {
+                    this.stopSpeaking();
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({ type: 'interrupt' }));
+                    }
+                }
+            }
+
+            stopSpeaking() {
+                if (this.speechSynthesis) {
+                    this.speechSynthesis.cancel();
+                    this.isSpeaking = false;
+                    this.interruptBtn.disabled = true;
+                    this.updateStatus('Speech interrupted');
+                }
+            }
+
+            updateVoiceButton() {
+                this.voiceBtn.className = 'voice-btn';
+                
+                if (this.isRecording) {
+                    this.voiceBtn.classList.add('recording');
+                    this.voiceIcon.textContent = '🔴';
+                } else if (this.isProcessing) {
+                    this.voiceBtn.classList.add('processing');
+                    this.voiceIcon.textContent = '⏳';
+                } else {
+                    this.voiceIcon.textContent = '🎤';
+                }
+            }
+
+            updateStatus(message) {
+                this.status.textContent = message;
+            }
+        }
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new RevoltVoiceChat();
+        });
+    </script> -->
+    <script>
+        class RevoltVoiceChat {
+            constructor() {
+                this.ws = null;
+                this.isRecording = false;
+                this.isProcessing = false;
+                this.isSpeaking = false;
+
+                // --- MODIFIED: Use SpeechRecognition instead of MediaRecorder ---
+                this.recognition = null;
+
+                this.speechSynthesis = window.speechSynthesis;
+                this.currentUtterance = null;
+
+                this.initializeElements();
+                this.initializeWebSocket();
+
+                // +++ ADDED: Initialize the real speech recognition +++
+                this.initializeSpeechRecognition();
+
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.chatArea = document.getElementById('chatArea');
+                this.voiceBtn = document.getElementById('voiceBtn');
+                this.voiceIcon = document.getElementById('voiceIcon');
+                this.interruptBtn = document.getElementById('interruptBtn');
+                this.status = document.getElementById('status');
+                this.textInput = document.getElementById('textInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.connectionStatus = document.getElementById('connectionStatus');
+            }
+
+            initializeWebSocket() {
+                const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${wsProtocol}//${window.location.host}`;
+
+                this.ws = new WebSocket(wsUrl);
+
+                this.ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    this.updateConnectionStatus(true);
+                    this.ws.send(JSON.stringify({ type: 'start_session' }));
+                };
+
+                this.ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    this.handleWebSocketMessage(data);
+                };
+
+                this.ws.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    this.updateConnectionStatus(false);
+                    setTimeout(() => this.initializeWebSocket(), 5000); // Attempt to reconnect
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus(false);
+                };
+            }
+
+            // +++ ADDED: New method to set up Speech Recognition +++
+            initializeSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    this.updateStatus('Speech recognition is not supported in this browser.');
+                    return;
+                }
+
+                this.recognition = new SpeechRecognition();
+                this.recognition.lang = 'en-IN'; // Critical for accuracy in India
+                this.recognition.interimResults = false;
+                this.recognition.continuous = false;
+
+                this.recognition.onstart = () => {
+                    this.isRecording = true;
+                    this.updateVoiceButton();
+                    this.updateStatus('Listening... Speak now!');
+                };
+
+                this.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.trim();
+                    if (transcript) {
+                        this.addMessage('user', transcript);
+                        this.sendMessageToServer(transcript);
+                    }
+                    this.isProcessing = false;
+                    this.updateVoiceButton();
+                };
+
+                this.recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    this.updateStatus(`Error: ${event.error}`);
+                    this.isRecording = false;
+                    this.isProcessing = false;
+                    this.updateVoiceButton();
+                };
+
+                this.recognition.onend = () => {
+                    this.isRecording = false;
+                    // Don't set processing here, onresult handles it
+                    if (!this.isProcessing) { // Only reset if not already processing
+                        this.updateVoiceButton();
+                    }
+                };
+            }
+
+            updateConnectionStatus(connected) {
+                this.connectionStatus.textContent = connected ? 'Connected' : 'Disconnected';
+                this.connectionStatus.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+            }
+
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'session_started':
+                        this.updateStatus('Session started - Ready to chat!');
+                        break;
+                    case 'text_response':
+                        this.isProcessing = false;
+                        this.updateVoiceButton();
+                        this.addMessage('assistant', data.message);
+                        this.speakResponse(data.message);
+                        break;
+                    case 'interrupted':
+                        this.stopSpeaking();
+                        break;
+                    case 'error':
+                        this.isProcessing = false;
+                        this.updateVoiceButton();
+                        this.updateStatus(`Error: ${data.message}`);
+                        break;
+                }
+            }
+
+            setupEventListeners() {
+                this.voiceBtn.addEventListener('click', () => this.toggleRecording());
+                this.interruptBtn.addEventListener('click', () => this.interruptSpeaking());
+                this.textInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendTextMessage();
+                });
+                this.sendBtn.addEventListener('click', () => this.sendTextMessage());
+            }
+
+            // === MODIFIED: This function now uses the new SpeechRecognition API ===
+            toggleRecording() {
+                if (!this.recognition) return;
+                if (this.isRecording) {
+                    this.recognition.stop();
+                    this.isProcessing = true;
+                    this.updateVoiceButton();
+                    this.updateStatus('Processing your message...');
+                } else {
+                    if (this.isSpeaking) this.stopSpeaking(); // Stop speaking if AI is talking
+                    this.recognition.start();
+                }
+            }
+
+            sendTextMessage() {
+                const message = this.textInput.value.trim();
+                if (message && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.addMessage('user', message);
+                    this.sendMessageToServer(message);
+                    this.textInput.value = '';
+                }
+            }
+
+            sendMessageToServer(message) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        type: 'text_message',
+                        message: message
+                    }));
+                    this.isProcessing = true; // Set processing state after sending
+                    this.updateVoiceButton();
+                    this.updateStatus('Rev is thinking...');
+                }
+            }
+
+            addMessage(sender, message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+
+                if (sender === 'assistant') {
+                    messageDiv.innerHTML = `<strong>Rev:</strong> ${message}`;
+                } else {
+                    messageDiv.innerHTML = `<strong>You:</strong> ${message}`;
+                }
+
+                this.chatArea.appendChild(messageDiv);
+                this.chatArea.scrollTop = this.chatArea.scrollHeight;
+            }
+
+            speakResponse(text) {
+                if (this.speechSynthesis && text) {
+                    this.speechSynthesis.cancel();
+
+                    this.currentUtterance = new SpeechSynthesisUtterance(text);
+                    this.currentUtterance.rate = 0.9;
+                    this.currentUtterance.pitch = 1;
+                    this.currentUtterance.volume = 0.8;
+
+                    const voices = this.speechSynthesis.getVoices();
+                    const femaleVoice = voices.find(voice =>
+                        voice.name.toLowerCase().includes('female') ||
+                        voice.name.toLowerCase().includes('zira') ||
+                        voice.name.toLowerCase().includes('catherine')
+                    );
+
+                    if (femaleVoice) {
+                        this.currentUtterance.voice = femaleVoice;
+                    }
+
+                    this.currentUtterance.onstart = () => {
+                        this.isSpeaking = true;
+                        this.interruptBtn.disabled = false;
+                        this.updateStatus('Rev is speaking...');
+                    };
+
+                    this.currentUtterance.onend = () => {
+                        this.isSpeaking = false;
+                        this.interruptBtn.disabled = true;
+                        this.updateStatus('Click the microphone to start voice chat');
+                    };
+
+                    this.speechSynthesis.speak(this.currentUtterance);
+                }
+            }
+
+            interruptSpeaking() {
+                if (this.isSpeaking) {
+                    this.stopSpeaking();
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({ type: 'interrupt' }));
+                    }
+                }
+            }
+
+            stopSpeaking() {
+                if (this.speechSynthesis) {
+                    this.speechSynthesis.cancel();
+                    this.isSpeaking = false;
+                    this.interruptBtn.disabled = true;
+                    this.updateStatus('Speech interrupted');
+                }
+            }
+
+            updateVoiceButton() {
+                this.voiceBtn.className = 'voice-btn';
+
+                if (this.isRecording) {
+                    this.voiceBtn.classList.add('recording');
+                    this.voiceIcon.textContent = '🔴';
+                } else if (this.isProcessing) {
+                    this.voiceBtn.classList.add('processing');
+                    this.voiceIcon.textContent = '⏳';
+                } else {
+                    this.voiceIcon.textContent = '🎤';
+                }
+            }
+
+            updateStatus(message) {
+                this.status.textContent = message;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new RevoltVoiceChat();
+        });
+    </script>
+
+</body>
+
+</html>
