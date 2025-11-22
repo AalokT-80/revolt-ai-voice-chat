@@ -81,7 +81,7 @@ This project is configured to use the **`gemini-1.5-flash-latest`** model.
 
 The task specified the `gemini-2.5-flash-preview-native-audio-dialog` model; however, it was determined that this specialized model is designed for a direct audio-streaming API and is incompatible with this application's text-based `generateContent` implementation.
 
-To meet all functional requirements—including low latency and robust interruption handling—the compatible and highly responsive `gemini-1.5-flash-latest`** model was selected. This approach successfully fulfills the core objective of replicating the benchmark's conversational experience.
+To meet all functional requirements—including low latency and robust interruption handling—the compatible and highly responsive `gemini-1.5-flash-latest` model was selected. This approach successfully fulfills the core objective of replicating the benchmark's conversational experience.
 
 ## 📜 License
 
